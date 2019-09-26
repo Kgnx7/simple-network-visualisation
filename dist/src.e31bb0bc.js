@@ -5727,9 +5727,135 @@ var _svg = _interopRequireDefault(require("svg.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+// // # ==================================================================
+// // # Algorithm
+// // # ==================================================================
+// Dijkstra’s shortest path algorithm 
+// source - https://rosettacode.org/wiki/Dijkstra%27s_algorithm#JavaScript
+var dijkstra = function dijkstra(edges, source, target) {
+  var Q = new Set(),
+      prev = {},
+      dist = {},
+      adj = {};
+
+  var vertex_with_min_dist = function vertex_with_min_dist(Q, dist) {
+    var min_distance = Infinity,
+        u = null;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = Q[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var v = _step.value;
+
+        if (dist[v] < min_distance) {
+          min_distance = dist[v];
+          u = v;
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    return u;
+  };
+
+  for (var i = 0; i < edges.length; i++) {
+    var v1 = edges[i].from.id.toString(),
+        v2 = edges[i].to.id.toString(),
+        len = edges[i].weight;
+    Q.add(v1);
+    Q.add(v2);
+    dist[v1] = Infinity;
+    dist[v2] = Infinity;
+    if (adj[v1] === undefined) adj[v1] = {};
+    if (adj[v2] === undefined) adj[v2] = {};
+    adj[v1][v2] = len;
+    adj[v2][v1] = len;
+  }
+
+  dist[source] = 0;
+
+  while (Q.size) {
+    var u = vertex_with_min_dist(Q, dist),
+        neighbors = Object.keys(adj[u]).filter(function (v) {
+      return Q.has(v);
+    }); //Neighbor still in Q 
+
+    Q.delete(u);
+    if (u === target) break; //Break when the target has been found
+
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = neighbors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var v = _step2.value;
+        var alt = dist[u] + adj[u][v];
+
+        if (alt < dist[v]) {
+          dist[v] = alt;
+          prev[v] = u;
+        }
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+  }
+
+  {
+    var _u = target,
+        S = [_u],
+        _len = 0;
+
+    while (prev[_u] !== undefined) {
+      S.unshift(prev[_u]);
+      _len += adj[_u][prev[_u]];
+      _u = prev[_u];
+    }
+
+    return [S, _len];
+  }
+}; // // # ==================================================================
+// // # GUI
+// // # ==================================================================
+
 
 var GUI = function GUI() {
   var _this = this;
@@ -5755,7 +5881,7 @@ var _SVG = function _SVG(svgWrapper) {
   _classCallCheck(this, _SVG);
 
   _defineProperty(this, "_setPopover", function (el, desc) {
-    _this2._popover = _this2._draw.text(desc).move(el.x + 20, el.y);
+    _this2._popover = _this2._draw.text(desc).move(el.x + 20, el.y - 5);
   });
 
   _defineProperty(this, "_clearPopover", function (_) {
@@ -5773,99 +5899,20 @@ var _SVG = function _SVG(svgWrapper) {
   });
 
   _defineProperty(this, "_renderLinks", function () {
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
-    try {
-      for (var _iterator = _this2._links[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var link = _step.value;
-        var f = link.from,
-            t = link.to,
-            w = link.weight;
-
-        _this2._draw.polyline([f.x, f.y, t.x, t.y]).stroke({
-          color: 'silver',
-          width: Math.min(10, w) // linecap: 'round',
-          // linejoin: 'round' 
-
-        });
-      }
-    } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator.return != null) {
-          _iterator.return();
-        }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
-      }
-    }
-
-    _this2._createLinksMatrix();
-  });
-
-  _defineProperty(this, "_createLinksMatrix", function (_) {
-    _this2._matrix = []; // this._matrix = Array.from({length: this.});
-
-    var _iteratorNormalCompletion2 = true;
-    var _didIteratorError2 = false;
-    var _iteratorError2 = undefined;
-
-    try {
-      var _loop = function _loop() {
-        var node = _step2.value;
-
-        _this2._matrix.push(_this2._links.filter(function (link) {
-          return link.from.id == node.id;
-        }).map(function (link) {
-          return link.weight;
-        }));
-      };
-
-      for (var _iterator2 = _this2._nodes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-        _loop();
-      }
-    } catch (err) {
-      _didIteratorError2 = true;
-      _iteratorError2 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-          _iterator2.return();
-        }
-      } finally {
-        if (_didIteratorError2) {
-          throw _iteratorError2;
-        }
-      }
-    }
-
-    console.log(_this2._matrix);
-  });
-
-  _defineProperty(this, "_renderNodes", function () {
     var _iteratorNormalCompletion3 = true;
     var _didIteratorError3 = false;
     var _iteratorError3 = undefined;
 
     try {
-      var _loop2 = function _loop2() {
-        var node = _step3.value;
-
-        _this2._draw.text("💻").font({
-          size: '1.5rem'
-        }).center(node.x, node.y).on("mouseover", function () {
-          return _this2._setPopover(node, node.id.toString());
-        }).on("mouseout", _this2._clearPopover);
-      };
-
-      for (var _iterator3 = _this2._nodes[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-        _loop2();
+      for (var _iterator3 = _this2._links[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        var link = _step3.value;
+        var f = link.from,
+            t = link.to,
+            w = link.weight;
+        link.el = _this2._draw.polyline([f.x, f.y, t.x, t.y]).stroke({
+          color: 'silver',
+          width: Math.min(10, w)
+        });
       }
     } catch (err) {
       _didIteratorError3 = true;
@@ -5881,8 +5928,179 @@ var _SVG = function _SVG(svgWrapper) {
         }
       }
     }
+
+    var _dijkstra = dijkstra(_this2._links, 1, 4),
+        _dijkstra2 = _slicedToArray(_dijkstra, 2),
+        path = _dijkstra2[0],
+        length = _dijkstra2[1];
+
+    _this2._createPath(path);
   });
 
+  _defineProperty(this, "_createPath", function (list) {
+    _this2._path = '';
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
+
+    try {
+      var _loop = function _loop() {
+        var item = _step4.value;
+
+        var node = _this2._nodes.find(function (node) {
+          return node.id == +item;
+        });
+
+        var action = _this2._path.length === 0 ? "M" : "L",
+            coords = "".concat(node.x, ", ").concat(node.y);
+        _this2._path += "".concat(action, " ").concat(coords);
+      };
+
+      for (var _iterator4 = list[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        _loop();
+      }
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
+          _iterator4.return();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
+      }
+    }
+
+    var path = _this2._draw.path(_this2._path).fill('none');
+
+    var rect = _this2._draw.text("📦");
+
+    var length = path.length();
+    rect.animate(8000, '<>').during(function (pos, morph, eased) {
+      var p = path.pointAt(eased * length);
+      rect.center(p.x, p.y);
+    }).loop(true, true);
+  });
+
+  _defineProperty(this, "_changeLinks", function () {
+    var _iteratorNormalCompletion5 = true;
+    var _didIteratorError5 = false;
+    var _iteratorError5 = undefined;
+
+    try {
+      for (var _iterator5 = _this2._links[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+        var link = _step5.value;
+        var f = link.from.el,
+            t = link.to.el,
+            w = link.weight;
+        link.el.plot([f.cx(), f.cy(), t.cx(), t.cy()]);
+      }
+    } catch (err) {
+      _didIteratorError5 = true;
+      _iteratorError5 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion5 && _iterator5.return != null) {
+          _iterator5.return();
+        }
+      } finally {
+        if (_didIteratorError5) {
+          throw _iteratorError5;
+        }
+      }
+    }
+  });
+
+  _defineProperty(this, "_getCoordsFromEvent", function (ev) {
+    if (ev.changedTouches) {
+      ev = ev.changedTouches[0];
+    }
+
+    return {
+      x: ev.clientX - _this2._bbox.x,
+      y: ev.clientY - _this2._bbox.y
+    };
+  });
+
+  _defineProperty(this, "_renderNodes", function () {
+    var _iteratorNormalCompletion6 = true;
+    var _didIteratorError6 = false;
+    var _iteratorError6 = undefined;
+
+    try {
+      var _loop2 = function _loop2() {
+        var node = _step6.value;
+        node.el = _this2._draw.text("💻").font({
+          size: '1.5rem'
+        }).center(node.x, node.y).on("mouseover", function () {
+          return _this2._setPopover(node, node.id.toString());
+        }).on("mouseout", _this2._clearPopover).on("mousedown", function (e) {
+          return _this2._handleDown(e, node);
+        });
+      };
+
+      for (var _iterator6 = _this2._nodes[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+        _loop2();
+      }
+    } catch (err) {
+      _didIteratorError6 = true;
+      _iteratorError6 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion6 && _iterator6.return != null) {
+          _iterator6.return();
+        }
+      } finally {
+        if (_didIteratorError6) {
+          throw _iteratorError6;
+        }
+      }
+    }
+  });
+
+  _defineProperty(this, "_handleDown", function (ev, node) {
+    var x = ev.clientX - _this2._bbox.x,
+        y = ev.clientY - _this2._bbox.y;
+    _this2._placeHolder = _this2._draw.text("💻").font({
+      size: '1.5rem',
+      opacity: .5
+    }).center(x, y);
+    _this2._draggable = node;
+
+    _this2._wrapper.addEventListener("mousemove", _this2._handleMove);
+
+    _this2._wrapper.addEventListener("mouseup", _this2._handleUp);
+  });
+
+  _defineProperty(this, "_handleMove", function (ev) {
+    var coord = _this2._getCoordsFromEvent(ev);
+
+    _this2._placeHolder.center(coord.x, coord.y);
+  });
+
+  _defineProperty(this, "_handleUp", function (ev) {
+    var node = _this2._draggable;
+
+    _this2._wrapper.removeEventListener("mousemove", _this2._handleMove);
+
+    _this2._wrapper.removeEventListener("mouseup", _this2._handleUp);
+
+    node.x = _this2._placeHolder.cx();
+    node.y = _this2._placeHolder.cy();
+    node.el.center(_this2._placeHolder.cx(), _this2._placeHolder.cy());
+
+    _this2._placeHolder.clear();
+
+    _this2._placeHolder = null;
+    _this2._draggable = null;
+
+    _this2._changeLinks();
+  });
+
+  this._wrapper = svgWrapper;
   this._draw = (0, _svg.default)(svgWrapper.id);
   this._nodes = [{
     id: 0,
@@ -5891,24 +6109,59 @@ var _SVG = function _SVG(svgWrapper) {
   }, {
     id: 1,
     x: 350,
-    y: 420
+    y: 450
   }, {
     id: 2,
     x: 320,
     y: 30
+  }, {
+    id: 3,
+    x: 220,
+    y: 130
+  }, {
+    id: 4,
+    x: 300,
+    y: 300
   }], this._links = [{
     from: this._nodes[0],
-    to: this._nodes[2],
+    to: this._nodes[1],
     weight: 1
   }, {
     from: this._nodes[1],
     to: this._nodes[2],
+    weight: 13
+  }, {
+    from: this._nodes[2],
+    to: this._nodes[3],
     weight: 3
+  }, {
+    from: this._nodes[1],
+    to: this._nodes[3],
+    weight: 10
+  }, {
+    from: this._nodes[3],
+    to: this._nodes[4],
+    weight: 1
   }], this._popover = null;
   this._matrix = null;
+  this._bbox = svgWrapper.getBoundingClientRect();
+  this._placeHolder = null;
+  this._draggable = null;
+  this._path = null;
 };
 
 function findPath(source, target) {}
+
+function getCoordsFromEvent(ev) {
+  if (ev.changedTouches) {
+    ev = ev.changedTouches[0];
+  }
+
+  return {
+    x: ev.clientX,
+    y: ev.clientY
+  };
+}
 
 function main() {
   var gui = new GUI();
@@ -5945,7 +6198,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52749" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64049" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
