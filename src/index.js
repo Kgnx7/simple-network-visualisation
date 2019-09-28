@@ -298,7 +298,7 @@ class _SVG {
     const length = path.length();
 
     this._draggable = false;
-    rect.animate(4000, '<>').during(function(pos, morph, eased){
+    rect.animate(4000, '-').during(function(pos, morph, eased){
       var p = path.pointAt(eased * length)
       rect.center(p.x, p.y)
     })
@@ -330,13 +330,15 @@ class _SVG {
     if (!this._draggable) {
       return;
     }
+    this._setBCR();
     const x = ev.clientX - this._bbox.x,
           y = ev.clientY - this._bbox.y;
     
     this._placeHolder = this._draw
       .text("💻")
       .font({ size: '1.5rem', opacity: .5})
-      .center(x, y);
+      .center(x, y)
+      .style('cursor', 'grabbing');
 
     this._draggableEl = node;
     this._wrapper.addEventListener("mousemove", this._handleMove);
