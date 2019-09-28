@@ -8,5 +8,29 @@ html(lang="en")
     title Document
   body
     h1 Network visualisation
+    button#add-node-btn Добавить узел
+    br
+    button#add-link-btn Добавить связь
+    form#add-link-form.hide(action="#")
+      label(for="weight") Вес
+      input(type="number", name="weight", id="weight")
+      br
+      label(for="from") От
+      select#a-from(name="from")
+      br
+      label(for="to") До
+      select#a-to(name="to")
+      br
+      input(type="submit", value="Добавить")
+    br
+    button#send-package-btn Отправить пакет
+    form#send-form.hide(action="#")
+      label(for="from") От
+      select#s-from(name="from")
+      br
+      label(for="to") До
+      select#s-to(name="to")
+      br
+      input(type="submit", value="Добавить")
     #surface
     script(src="index.js")
