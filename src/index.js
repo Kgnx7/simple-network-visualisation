@@ -163,7 +163,7 @@ class _SVG {
     ],
     this._popover = null;
     this._matrix = null;
-    this._bbox = svgWrapper.getBoundingClientRect();
+    this._bbox = this._getBCR();
     this._placeHolder = null;
     this._draggableEl = null;
     this._draggable = true;
@@ -173,6 +173,8 @@ class _SVG {
     this._draw.hide();
   }
 
+  _getBCR = () => this._wrapper.getBoundingClientRect();
+  _setBCR = () => this._bbox = this._getBCR();
   _setPopover = (el, desc) => {
     this._popover = this._draw.text(desc).move(el.x + 20, el.y-5);
   }
