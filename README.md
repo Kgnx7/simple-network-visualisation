@@ -1,6 +1,6 @@
 ## 📚 Yet another university project 🚀👩‍🚀
 
-# simple network visualisation using svg.js
+# simple network visualization using svg.js
 
 How to make it work? 🐱‍💻
 
